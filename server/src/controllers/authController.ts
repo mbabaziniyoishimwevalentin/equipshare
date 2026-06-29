@@ -77,31 +77,23 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    if (user.role === 'ADMIN') {
-      const token = jwt.sign(
-        { id: user.id, role: user.role },
-        process.env.JWT_SECRET || 'fallback_secret',
-        { expiresIn: '7d' }
-      );
-
-      return res.json({ token, user: { id: user.id, email: user.email, role: user.role, firstName: user.firstName, lastName: user.lastName } });
-    }
-
-    const code = createRandomCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { email2faCode: code, email2faCodeExpires: expiresAt },
-    });
-
-    await sendEmail(
-      user.email,
-      'EquipShare login code',
-      `<p>Your EquipShare verification code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '7d' }
     );
 
-    return res.json({ requires2fa: true, userId: user.id, email: maskEmail(user.email) });
+    return res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        firstName: user.firstName, 
+        lastName: user.lastName 
+      } 
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error during login' });
@@ -167,7 +159,6 @@ export const resendLoginCode = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/auth/me — return current user profile
 export const getMe = async (req: Request, res: Response) => {
   try {
     // @ts-ignore
@@ -202,7 +193,6 @@ export const getMe = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /api/auth/me — update profile
 export const updateMe = async (req: Request, res: Response) => {
   try {
     // @ts-ignore
@@ -307,7 +297,6 @@ export const disable2FA = async (req: Request, res: Response) => {
   }
 };
 
-// PUT /api/auth/change-password
 export const requestPasswordReset = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
