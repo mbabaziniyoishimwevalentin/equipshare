@@ -1,0 +1,314 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  email                  String    @unique
+  passwordHash           String
+  firstName              String
+  lastName               String
+  role                   Role      @default(RENTER)
+  phone                  String?
+  phoneVerified          Boolean   @default(false)
+  address                String?
+  dateOfBirth            DateTime?
+  preferredCommunication String?
+  nationalId             String?
+  identityDocumentUrl    String?
+  isVerified             Boolean   @default(false)
+  acceptedTerms          Boolean   @default(false)
+  email2faEnabled        Boolean   @default(false)
+  email2faCode           String?
+  email2faCodeExpires    DateTime?
+  passwordResetCode      String?
+  passwordResetExpires   DateTime?
+  profilePictureUrl      String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  equipments       Equipment[]
+  orders           Order[]
+  payments         Payment[]
+  sentMessages     Message[]         @relation("SentMessages")
+  reviews          Review[]          @relation("ReviewAuthor")
+  favourites       Favourite[]
+  notifications    Notification[]
+  meetups          Meetup[]
+  suggestions      Suggestion[]
+  tips             SharingTip[]
+  communityEvents  CommunityEvent[]
+  communities      Community[]       @relation("OwnedCommunities")
+  communityMembers CommunityMember[]
+  rsvps            RSVP[]
+  tipLikes         TipLike[]
+  tipComments      TipComment[]
+}
+
+model Meetup {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String
+  location     String
+  date         DateTime
+  image        String?
+  maxAttendees Int?
+  communityId  Int
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  organizerId  Int
+  organizer    User      @relation(fields: [organizerId], references: [id])
+  rsvps        RSVP[]
+  createdAt    DateTime  @default(now())
+}
+
+model Suggestion {
+  id          Int       @id @default(autoincrement())
+  body        String
+  addressed   Boolean   @default(false)
+  communityId Int
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model CommunityEvent {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String
+  location     String
+  date         DateTime
+  image        String?
+  maxAttendees Int?
+  communityId  Int
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  organizerId  Int
+  organizer    User      @relation(fields: [organizerId], references: [id])
+  interested   Int       @default(0)
+  rsvps        RSVP[]
+  createdAt    DateTime  @default(now())
+}
+
+model SharingTip {
+  id          Int          @id @default(autoincrement())
+  title       String
+  body        String
+  category    String
+  image       String?
+  communityId Int
+  community   Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  authorId    Int
+  author      User         @relation(fields: [authorId], references: [id])
+  likes       TipLike[]
+  comments    TipComment[]
+  createdAt   DateTime     @default(now())
+}
+
+model TipLike {
+  id     Int        @id @default(autoincrement())
+  tipId  Int
+  tip    SharingTip @relation(fields: [tipId], references: [id], onDelete: Cascade)
+  userId Int
+  user   User       @relation(fields: [userId], references: [id])
+
+  @@unique([tipId, userId])
+}
+
+model TipComment {
+  id        Int        @id @default(autoincrement())
+  tipId     Int
+  tip       SharingTip @relation(fields: [tipId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User       @relation(fields: [userId], references: [id])
+  body      String
+  createdAt DateTime   @default(now())
+}
+
+model Community {
+  id          Int               @id @default(autoincrement())
+  name        String
+  description String
+  image       String?
+  ownerId     Int
+  owner       User              @relation("OwnedCommunities", fields: [ownerId], references: [id])
+  members     CommunityMember[]
+  meetups     Meetup[]
+  events      CommunityEvent[]
+  tips        SharingTip[]
+  suggestions Suggestion[]
+  createdAt   DateTime          @default(now())
+}
+
+model CommunityMember {
+  id          Int       @id @default(autoincrement())
+  communityId Int
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  joinedAt    DateTime  @default(now())
+
+  @@unique([communityId, userId])
+}
+
+model RSVP {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  user      User            @relation(fields: [userId], references: [id])
+  meetupId  Int?
+  meetup    Meetup?         @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  eventId   Int?
+  event     CommunityEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status    RSVPStatus      @default(PENDING)
+  reason    String?
+  createdAt DateTime        @default(now())
+}
+
+model Equipment {
+  id          Int         @id @default(autoincrement())
+  title       String
+  category    String
+  description String
+  specs       String?
+  images      String[]
+  hourlyRate  Float?
+  dailyRate   Float?
+  weeklyRate  Float?
+  deposit     Float?
+  location    String
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean     @default(true)
+  ownerId     Int
+  owner       User        @relation(fields: [ownerId], references: [id])
+  orderItems  OrderItem[]
+  reviews     Review[]
+  favourites  Favourite[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  orderNumber String      @unique @default(cuid())
+  subtotal    Float       @default(0)
+  tax         Float       @default(0)
+  totalAmount Float
+  status      OrderStatus @default(PENDING)
+  renterId    Int
+  renter      User        @relation(fields: [renterId], references: [id])
+  items       OrderItem[]
+  payment     Payment?
+  messages    Message[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  price       Float
+  timeline    String?
+  totalAmount Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  orderId   Int           @unique
+  order     Order         @relation(fields: [orderId], references: [id])
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+// ── Chat Messages (shared between renter & owner per order) ────────
+model Message {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderId  Int
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+}
+
+// ── Equipment Reviews ──────────────────────────────────────────────
+model Review {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  authorId    Int
+  author      User      @relation("ReviewAuthor", fields: [authorId], references: [id])
+  rating      Int // 1-5
+  comment     String
+  ownerReply  String? // owner's reply text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ── Favourites / Wishlist ──────────────────────────────────────────
+model Favourite {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, equipmentId])
+}
+
+// ── Notifications ──────────────────────────────────────────────────
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // new_order | message | review | payment | delivery | new_equipment
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  ESCROW
+  RELEASED
+  REFUNDED
+}
+
+enum Role {
+  OWNER
+  RENTER
+  ADMIN
+}
+
+enum RSVPStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
