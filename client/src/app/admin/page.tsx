@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState<"users" | "equipment" | "orders">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "equipment" | "orders" | "sales">("users");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +81,30 @@ export default function AdminDashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
+  const [salesDateFrom, setSalesDateFrom] = useState("");
+  const [salesDateTo, setSalesDateTo] = useState("");
+  const [salesPeriodLabel, setSalesPeriodLabel] = useState("");
+
+  const setSalesPreset = (preset: "daily" | "weekly" | "monthly") => {
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    if (preset === "daily") {
+      setSalesDateFrom(today);
+      setSalesDateTo(today);
+      setSalesPeriodLabel("Daily");
+    } else if (preset === "weekly") {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      setSalesDateFrom(weekStart.toISOString().split("T")[0]);
+      setSalesDateTo(today);
+      setSalesPeriodLabel("Weekly");
+    } else if (preset === "monthly") {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      setSalesDateFrom(monthStart.toISOString().split("T")[0]);
+      setSalesDateTo(today);
+      setSalesPeriodLabel("Monthly");
+    }
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -434,6 +458,69 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleExportSalesPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const dateStr = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const adminName = user ? `${user.firstName} ${user.lastName}` : "Admin";
+    const rows = filteredSales.map(s => `
+      <tr>
+        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${s.date}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${s.orders.length}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px; font-weight: bold; color: #0B215E;">Rwf ${s.total.toFixed(0)}</td>
+      </tr>
+    `).join("");
+    const grandTotal = filteredSales.reduce((s, g) => s + g.total, 0);
+    const periodTitle = salesPeriodLabel ? `${salesPeriodLabel} Sales Report` : "Sales Report";
+    const fromLabel = salesDateFrom ? new Date(salesDateFrom).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Earliest";
+    const toLabel = salesDateTo ? new Date(salesDateTo).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Latest";
+
+    printWindow.document.write(`
+      <html><head><title>Sales Report</title>
+        <style>
+          body { font-family: sans-serif; color: #333; margin: 40px; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0B215E; padding-bottom: 20px; margin-bottom: 30px; }
+          .logo-sec { display: flex; align-items: center; gap: 10px; }
+          .system-logo { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #0B215E, #c700ff); }
+          .company-name { font-size: 20px; font-weight: bold; color: #0B215E; }
+          .meta { text-align: right; font-size: 12px; color: #666; }
+          .title { font-size: 18px; font-weight: bold; text-transform: uppercase; color: #111; margin-bottom: 20px; }
+          .info-row { font-size: 12px; color: #555; margin: 4px 0; }
+          .info-label { font-weight: bold; color: #333; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background: #0B215E; color: white; border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+          .grand-total { font-weight: bold; background: #f0f4ff; font-size: 14px; }
+        </style>
+      </head><body>
+        <div class="header">
+          <div class="logo-sec">
+            <div class="system-logo"></div>
+            <span class="company-name">EQUIPSHARE</span>
+          </div>
+          <div class="meta">
+            <p style="margin: 0; font-weight: bold;">${periodTitle.toUpperCase()}</p>
+            <p style="margin: 3px 0 0 0;">Generated: ${dateStr}</p>
+          </div>
+        </div>
+        <h2 class="title">Sales Report</h2>
+        <p class="info-row"><span class="info-label">Prepared by:</span> ${adminName}</p>
+        <p class="info-row"><span class="info-label">Generated by:</span> EquipShare Admin Panel</p>
+        <p class="info-row"><span class="info-label">Period:</span> ${fromLabel} — ${toLabel}</p>
+        <table><thead><tr>
+          <th>Date</th><th>Orders</th><th>Total (Rwf)</th>
+        </tr></thead><tbody>
+          ${rows}
+          <tr class="grand-total">
+            <td style="border: 1px solid #ddd; padding: 8px;" colspan="2">Grand Total</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">Rwf ${grandTotal.toFixed(0)}</td>
+          </tr>
+        </tbody></table>
+        <script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script>
+      </body></html>
+    `);
+    printWindow.document.close();
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "ADMIN": return "bg-purple-100 text-purple-700";
@@ -460,6 +547,23 @@ export default function AdminDashboard() {
   const completedOrders = orders.filter((o) => o.status === "COMPLETED");
   const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const dailySales = completedOrders
+    .filter((o) => new Date(o.createdAt) >= startOfDay)
+    .reduce((s, o) => s + o.totalAmount, 0);
+  const weeklySales = completedOrders
+    .filter((o) => new Date(o.createdAt) >= startOfWeek)
+    .reduce((s, o) => s + o.totalAmount, 0);
+  const monthlySales = completedOrders
+    .filter((o) => new Date(o.createdAt) >= startOfMonth)
+    .reduce((s, o) => s + o.totalAmount, 0);
+
   // Filters
   const filteredUsers = users.filter(
     (u) =>
@@ -472,6 +576,26 @@ export default function AdminDashboard() {
       e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Sales data grouped by date
+  const salesByDate: { date: string; orders: Order[]; total: number }[] = (() => {
+    const map = new Map<string, Order[]>();
+    for (const o of completedOrders) {
+      const d = new Date(o.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      if (!map.has(d)) map.set(d, []);
+      map.get(d)!.push(o);
+    }
+    return Array.from(map.entries())
+      .map(([date, orders]) => ({ date, orders, total: orders.reduce((s, o) => s + o.totalAmount, 0) }))
+      .sort((a, b) => new Date(b.orders[0].createdAt).getTime() - new Date(a.orders[0].createdAt).getTime());
+  })();
+
+  const filteredSales = salesByDate.filter((s) => {
+    const d = new Date(s.orders[0].createdAt);
+    if (salesDateFrom && d < new Date(salesDateFrom)) return false;
+    if (salesDateTo && d > new Date(salesDateTo + "T23:59:59")) return false;
+    return true;
+  });
 
   const filteredOrders = orders.filter((o) => {
     if (orderStatusFilter && o.status !== orderStatusFilter) return false;
@@ -518,15 +642,19 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Financial platform stats */}
+        {/* Sales stats */}
         <div className="grid grid-cols-3 gap-2.5 mt-2.5">
-          <div className="bg-white/10 rounded-xl p-3 text-white text-center border border-white/5 col-span-2">
-            <p className="text-xl font-bold text-green-300">Rwf {totalRevenue.toFixed(0)}</p>
-            <p className="text-blue-200 text-[10px] mt-0.5">Platform Revenue</p>
+          <div className="bg-white/10 rounded-xl p-3 text-white text-center border border-white/5">
+            <p className="text-lg font-bold text-green-300">Rwf {dailySales.toFixed(0)}</p>
+            <p className="text-blue-200 text-[9px] mt-0.5">Daily</p>
           </div>
           <div className="bg-white/10 rounded-xl p-3 text-white text-center border border-white/5">
-            <p className="text-xl font-bold">{completedOrders.length}</p>
-            <p className="text-blue-200 text-[10px] mt-0.5">Sales</p>
+            <p className="text-lg font-bold text-green-300">Rwf {weeklySales.toFixed(0)}</p>
+            <p className="text-blue-200 text-[9px] mt-0.5">Weekly</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 text-white text-center border border-white/5">
+            <p className="text-lg font-bold text-green-300">Rwf {monthlySales.toFixed(0)}</p>
+            <p className="text-blue-200 text-[9px] mt-0.5">Monthly</p>
           </div>
         </div>
       </div>
@@ -545,7 +673,7 @@ export default function AdminDashboard() {
 
         {/* Tab Bar */}
         <div className="flex bg-white rounded-xl shadow-sm overflow-hidden mb-4 border border-gray-100">
-          {(["users", "equipment", "orders"] as const).map((tab) => (
+          {(["users", "equipment", "orders", "sales"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSearchQuery(""); }}
@@ -773,6 +901,73 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* SALES TAB */}
+        {activeTab === "sales" && (
+          <div className="space-y-4">
+            {/* Preset & Export buttons */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <button onClick={() => setSalesPreset("daily")} className={`py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm ${salesPeriodLabel === "Daily" ? "bg-[#0B215E] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+                  Daily
+                </button>
+                <button onClick={() => setSalesPreset("weekly")} className={`py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm ${salesPeriodLabel === "Weekly" ? "bg-[#0B215E] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+                  Weekly
+                </button>
+                <button onClick={() => setSalesPreset("monthly")} className={`py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm ${salesPeriodLabel === "Monthly" ? "bg-[#0B215E] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+                  Monthly
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 mb-1 block">From</label>
+                  <input type="date" value={salesDateFrom} onChange={e => { setSalesDateFrom(e.target.value); setSalesPeriodLabel(""); }} className="w-full border border-gray-200 rounded-lg px-2 py-2 text-xs text-gray-900 bg-white focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 mb-1 block">To</label>
+                  <input type="date" value={salesDateTo} onChange={e => { setSalesDateTo(e.target.value); setSalesPeriodLabel(""); }} className="w-full border border-gray-200 rounded-lg px-2 py-2 text-xs text-gray-900 bg-white focus:outline-none" />
+                </div>
+                <div className="flex items-end">
+                  <button onClick={handleExportSalesPDF} className="w-full flex items-center justify-center gap-1.5 bg-[#0B215E] text-white text-xs font-bold py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+            {filteredSales.length === 0 && <p className="text-center text-gray-400 py-8 text-sm">No sales data found.</p>}
+            {filteredSales.map((s) => (
+              <div key={s.date} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-gray-900 text-sm">{s.date}</h3>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-50 text-green-700">
+                    {s.orders.length} order{s.orders.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="space-y-1.5 mb-3">
+                  {s.orders.map((o) => (
+                    <div key={o.id} className="flex justify-between text-sm">
+                      <span className="text-gray-600">#{o.orderNumber.slice(-8).toUpperCase()} — {o.items.map(i => i.equipment.title).join(", ")}</span>
+                      <span className="font-bold text-[#FF5C00]">Rwf {o.totalAmount.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between border-t border-gray-100 pt-2">
+                  <span className="text-sm font-bold text-gray-900">Daily Total</span>
+                  <span className="text-base font-bold text-[#0B215E]">Rwf {s.total.toFixed(0)}</span>
+                </div>
+              </div>
+            ))}
+            {filteredSales.length > 0 && (
+              <div className="bg-gradient-to-r from-[#0B215E] to-[#1a3a8f] rounded-xl p-4 shadow-md">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-white">Grand Total</span>
+                  <span className="text-xl font-bold text-green-300">Rwf {filteredSales.reduce((s, g) => s + g.total, 0).toFixed(0)}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
