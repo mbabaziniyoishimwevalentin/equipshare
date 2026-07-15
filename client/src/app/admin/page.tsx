@@ -532,15 +532,15 @@ export default function AdminDashboard() {
           th { background: #5a67d8; color: white; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
           th.center, td.td-center { text-align: center; }
           th.right, td.amt { text-align: right; }
-          .td { border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 9px; color: #334155; }
+          .td { border: 1px solid #cbd5e1; padding: 4px 5px; font-size: 9px; color: #334155; }
           .tr:nth-child(even) { background-color: #f8fafc; }
           
-          /* Column width overrides to make it compact and not too wide */
+          /* Column width overrides — compact layout */
           .col-num { width: 5%; }
-          .col-name { width: 35%; }
+          .col-name { width: 38%; }
           .col-qty { width: 8%; }
-          .col-amt { width: 15%; }
-          .col-paidby { width: 22%; }
+          .col-amt { width: 17%; }
+          .col-paidby { width: 17%; }
           .col-date { width: 15%; }
 
           /* Summary row below the table */
@@ -615,7 +615,7 @@ export default function AdminDashboard() {
         </table>
 
         <div class="total-summary-container">
-          <div class="total-summary-label">Total Sales in Period</div>
+          <div class="total-summary-label">Total Price</div>
           <div class="total-summary-value">Rwf ${grandTotal.toLocaleString()}</div>
         </div>
 
