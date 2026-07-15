@@ -479,88 +479,173 @@ export default function AdminDashboard() {
           const datePaid = new Date(o.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
           rows.push(`
           <tr>
-            <td class="td">${rowNum}</td>
+            <td class="td td-center">${rowNum}</td>
             <td class="td">${item.equipment.title}</td>
-            <td class="td">${item.quantity}</td>
-            <td class="td amt">Rwf ${Number(item.totalAmount).toFixed(0)}</td>
+            <td class="td td-center">${item.quantity}</td>
+            <td class="td amt">Rwf ${Number(item.totalAmount).toLocaleString()}</td>
             <td class="td">${paidBy}</td>
-            <td class="td">${datePaid}</td>
+            <td class="td td-center">${datePaid}</td>
           </tr>`);
         }
       }
     }
 
     const html = `
-      <html><head><title>Sales Report</title>
+      <html>
+      <head>
+        <title>Sales Report</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; padding: 30px 35px; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0B215E; padding-bottom: 16px; margin-bottom: 10px; }
-          .logo-sec { display: flex; align-items: center; gap: 10px; }
-          .system-logo { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #0B215E, #c700ff); display: inline-block; }
-          .company-name { font-size: 22px; font-weight: 900; color: #0B215E; letter-spacing: 1px; }
-          .meta { text-align: right; font-size: 11px; color: #555; }
-          .meta p { margin: 1px 0; }
-          .sub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-          .report-title { font-size: 16px; font-weight: bold; text-transform: uppercase; color: #0B215E; }
-          .info-line { font-size: 11px; color: #444; margin: 2px 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-          th { background: #0B215E; color: white; border: 1px solid #0B215E; padding: 5px 6px; text-align: left; font-size: 11px; font-weight: 600; }
-          .td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
-          .amt { text-align: right; font-weight: 600; }
-          .grand-total-row .td { font-weight: bold; background: #f0f4ff; font-size: 12px; }
-          .footer { margin-top: 28px; display: flex; justify-content: space-between; font-size: 11px; }
-          .footer-box { width: 45%; }
-          .footer-box p { margin: 2px 0; }
-          .sig-line { margin-top: 28px; border-top: 1px solid #333; display: inline-block; padding-top: 4px; font-size: 11px; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; padding: 30px 40px; background-color: #fff; line-height: 1.4; }
+          
+          /* Header Styling matching image */
+          .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+          .header-left { display: flex; align-items: center; gap: 10px; }
+          .logo-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+          .logo-box-inner { width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #e11d48, #c084fc); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+          .org-info { line-height: 1.2; }
+          .org-title { font-size: 11px; font-weight: bold; color: #1e293b; }
+          .org-subtitle { font-size: 9px; color: #64748b; }
+          
+          .header-center { text-align: center; }
+          .brand-logo-text { font-size: 18px; font-weight: 800; color: #4f46e5; letter-spacing: 1.5px; text-transform: uppercase; }
+          .document-type-label { font-size: 10px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+          
+          .header-right { text-align: right; font-size: 9px; color: #64748b; line-height: 1.4; }
+          
+          .horizontal-divider { border-bottom: 2px solid #5a67d8; margin: 8px 0; }
+          
+          .report-subtitle-centered { text-align: center; margin-bottom: 12px; }
+          .report-subtitle-centered h2 { font-size: 13px; color: #4f46e5; font-weight: 700; margin-bottom: 2px; }
+          .report-subtitle-centered p { font-size: 9px; color: #64748b; }
+
+          /* Filter and stats box matching the image layout */
+          .filter-stats-bar { display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; margin-bottom: 15px; font-size: 10px; color: #475569; }
+          .filter-item { font-weight: 500; }
+          .filter-item strong { color: #1e293b; }
+
+          /* Section header matching image */
+          .section-title { font-size: 11px; font-weight: bold; color: #0f172a; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+          /* Table Design matching image (not too wide, compact column widths) */
+          table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+          th { background: #5a67d8; color: white; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+          th.center, td.td-center { text-align: center; }
+          th.right, td.amt { text-align: right; }
+          .td { border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 9px; color: #334155; }
+          .tr:nth-child(even) { background-color: #f8fafc; }
+          
+          /* Column width overrides to make it compact and not too wide */
+          .col-num { width: 5%; }
+          .col-name { width: 35%; }
+          .col-qty { width: 8%; }
+          .col-amt { width: 15%; }
+          .col-paidby { width: 22%; }
+          .col-date { width: 15%; }
+
+          /* Summary row below the table */
+          .total-summary-container { display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid #cbd5e1; border-bottom: 1.5px solid #cbd5e1; padding: 8px 12px; margin-bottom: 30px; }
+          .total-summary-label { font-size: 10px; font-weight: bold; color: #475569; }
+          .total-summary-value { font-size: 12px; font-weight: 800; color: #1e293b; }
+
+          /* Double signatures section matching image */
+          .signatures-container { display: flex; justify-content: space-between; margin-top: 40px; }
+          .signature-box { width: 42%; }
+          .signature-title { font-size: 9px; font-weight: bold; color: #4f46e5; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .signature-details { font-size: 9px; color: #64748b; line-height: 1.5; }
+          .signature-details strong { color: #1e293b; }
+          .signature-space { height: 35px; }
+
+          /* Document Footer styling */
+          .report-footer { margin-top: 50px; text-align: center; font-size: 8px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
         </style>
-      </head><body>
-        <div class="header">
-          <div class="logo-sec">
-            <div class="system-logo"></div>
-            <span class="company-name">EQUIPSHARE</span>
+      </head>
+      <body>
+        <div class="header-container">
+          <div class="header-left">
+            <div class="logo-container">
+              <div class="logo-box-inner">EQ</div>
+            </div>
+            <div class="org-info">
+              <div class="org-title">EquipShare Ltd</div>
+              <div class="org-subtitle">Kigali, Rwanda</div>
+            </div>
           </div>
-          <div class="meta">
-            <p><strong>${periodTitle.toUpperCase()}</strong></p>
-            <p>Generated: ${generateDate}</p>
+          
+          <div class="header-center">
+            <div class="brand-logo-text">EQUIPSHARE</div>
+            <div class="document-type-label">Sales Report</div>
+          </div>
+          
+          <div class="header-right">
+            <div>Reporting period: ${salesPeriodLabel ? salesPeriodLabel : "All time - Present"}</div>
+            <div>Generated date: ${generateDate}</div>
           </div>
         </div>
-        <div class="sub-header">
-          <span class="report-title">Sales Report</span>
-          <span class="info-line"><strong>Period:</strong> ${fromLabel} — ${toLabel}</span>
+
+        <div class="horizontal-divider"></div>
+
+        <div class="report-subtitle-centered">
+          <h2>EquipShare Ltd — Kigali, Rwanda</h2>
+          <p>Type: Sales Report</p>
         </div>
+
+        <div class="filter-stats-bar">
+          <div class="filter-item">Report Type: <strong>Sales Report</strong></div>
+          <div class="filter-item">Period Filter: <strong>${fromLabel} — ${toLabel}</strong></div>
+          <div class="filter-item">Total Transactions: <strong>${rowNum}</strong></div>
+        </div>
+
+        <div class="section-title">1. Sales Detail</div>
+
         <table>
-          <thead><tr>
-            <th style="width:30px;">#</th>
-            <th>Product Name</th>
-            <th style="width:50px;">Qty</th>
-            <th style="width:90px;">Amount Paid</th>
-            <th>Paid By</th>
-            <th style="width:80px;">Date</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th class="col-num center">#</th>
+              <th class="col-name">Product Name</th>
+              <th class="col-qty center">Qty</th>
+              <th class="col-amt right">Amount Paid</th>
+              <th class="col-paidby">Paid By</th>
+              <th class="col-date center">Date</th>
+            </tr>
+          </thead>
           <tbody>
             ${rows.join("")}
-            <tr class="grand-total-row">
-              <td class="td" colspan="3" style="text-align:right;font-weight:bold;">Amafaranga Total</td>
-              <td class="td amt">Rwf ${grandTotal.toFixed(0)}</td>
-              <td class="td"></td>
-              <td class="td"></td>
-            </tr>
           </tbody>
         </table>
-        <div class="footer">
-          <div class="footer-box">
-            <p><strong>Prepared by:</strong> Kobusinge Goreth (Kabelo Admin)</p>
-            <p><strong>Date:</strong> ${generateDate}</p>
-            <p><strong>Signature:</strong> <span class="sig-line">_________________________</span></p>
+
+        <div class="total-summary-container">
+          <div class="total-summary-label">Total Sales in Period</div>
+          <div class="total-summary-value">Rwf ${grandTotal.toLocaleString()}</div>
+        </div>
+
+        <div class="signatures-container">
+          <div class="signature-box">
+            <div class="signature-title">Prepared By</div>
+            <div class="signature-space"></div>
+            <div class="signature-details">
+              <strong>${adminName}</strong><br/>
+              ADMINISTRATOR<br/>
+              ${generateDate}
+            </div>
           </div>
-          <div class="footer-box" style="text-align:right;">
-            <p><strong>Approved by:</strong> System Administrator</p>
-            <p><strong>Equipshare Soft Inc</strong></p>
-            <p><strong>Signature:</strong> <span class="sig-line">_________________________</span></p>
+          
+          <div class="signature-box">
+            <div class="signature-title">Approved By</div>
+            <div class="signature-space"></div>
+            <div class="signature-details">
+              <strong>System Administrator</strong><br/>
+              EquipShare Ltd<br/>
+              Date: _________________
+            </div>
           </div>
         </div>
-      </body></html>
+
+        <div class="report-footer">
+          Generated on: ${generateDate} | Generated by: ${user?.email || "admin@equipshare.com"} | © 2026 EquipShare — Kigali, Rwanda. Confidential.
+        </div>
+      </body>
+      </html>
     `;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
