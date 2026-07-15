@@ -32,6 +32,7 @@ export default function EquipmentDetailPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [rentalType, setRentalType] = useState<"hourly" | "daily">("daily");
+  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
   const alreadyInCart = cart.some((c) => c.equipmentId === Number(id));
@@ -92,11 +93,11 @@ export default function EquipmentDetailPage() {
     if (ms <= 0) return 0;
     if (rentalType === "hourly") {
       const hours = ms / (1000 * 60 * 60);
-      return +(hours * (equipment.hourlyRate || 0)).toFixed(2);
+      return +(hours * (equipment.hourlyRate || 0) * quantity).toFixed(2);
     } else {
       const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
       return +(
-        days * (equipment.dailyRate || equipment.hourlyRate * 8 || 0)
+        days * (equipment.dailyRate || equipment.hourlyRate * 8 || 0) * quantity
       ).toFixed(2);
     }
   };
@@ -153,6 +154,23 @@ export default function EquipmentDetailPage() {
     if (selectedPeriodOverlaps()) {
       return "The selected period overlaps an already booked date range.";
     }
+    if (equipment.maxRentalPeriod) {
+      const ms = end.getTime() - start.getTime();
+      const unit = equipment.maxRentalPeriod.includes("day") ? "day" : equipment.maxRentalPeriod.includes("week") ? "week" : equipment.maxRentalPeriod.includes("month") ? "month" : null;
+      const maxVal = parseInt(equipment.maxRentalPeriod);
+      if (unit === "day" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal) return `Rental cannot exceed ${equipment.maxRentalPeriod}.`;
+      }
+      if (unit === "week" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal * 7) return `Rental cannot exceed ${equipment.maxRentalPeriod}.`;
+      }
+      if (unit === "month" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal * 30) return `Rental cannot exceed ${equipment.maxRentalPeriod}.`;
+      }
+    }
     return "";
   };
   const bookingError = bookingValidationMessage();
@@ -181,11 +199,23 @@ export default function EquipmentDetailPage() {
     if (selectedPeriodOverlaps()) {
       alert("The selected period overlaps an already booked date range.");
       return;
-            {bookingError && (
-              <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-4">
-                {bookingError}
-              </div>
-            )}
+    }
+    if (equipment.maxRentalPeriod) {
+      const ms = end.getTime() - start.getTime();
+      const unit = equipment.maxRentalPeriod.includes("day") ? "day" : equipment.maxRentalPeriod.includes("week") ? "week" : equipment.maxRentalPeriod.includes("month") ? "month" : null;
+      const maxVal = parseInt(equipment.maxRentalPeriod);
+      if (unit === "day" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal) { alert(`Rental cannot exceed ${equipment.maxRentalPeriod}.`); return; }
+      }
+      if (unit === "week" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal * 7) { alert(`Rental cannot exceed ${equipment.maxRentalPeriod}.`); return; }
+      }
+      if (unit === "month" && rentalType === "daily") {
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > maxVal * 30) { alert(`Rental cannot exceed ${equipment.maxRentalPeriod}.`); return; }
+      }
     }
     const total = calcTotal();
     if (total <= 0) {
@@ -206,6 +236,7 @@ export default function EquipmentDetailPage() {
         rentalType === "hourly"
           ? equipment.hourlyRate
           : equipment.dailyRate || equipment.hourlyRate * 8,
+      quantity,
       totalAmount: total,
     });
     setShowModal(false);
@@ -259,7 +290,7 @@ export default function EquipmentDetailPage() {
               </svg>
             </button>
             <button
-              onClick={() => !equipment.isActive ? undefined : alreadyInCart ? router.push("/cart") : setShowModal(true)}
+              onClick={() => !equipment.isActive ? undefined : alreadyInCart ? router.push("/cart") : (setQuantity(1), setShowModal(true))}
               disabled={!equipment.isActive}
               className={`text-white text-xs font-semibold px-4 py-2 rounded-md transition-all ${
                 !equipment.isActive
@@ -301,6 +332,12 @@ export default function EquipmentDetailPage() {
             <span className="text-gray-600">Daily:</span>
             <span className="text-gray-700 font-semibold">Rwf {Number(equipment.dailyRate || equipment.hourlyRate * 8).toLocaleString()} / day</span>
           </div>
+          {equipment.maxRentalPeriod && (
+            <div className="flex flex-wrap gap-4 items-center mt-1">
+              <span className="text-gray-600">Max rental:</span>
+              <span className="text-[#FF5C00] font-semibold text-sm">{equipment.maxRentalPeriod}</span>
+            </div>
+          )}
         </div>
 
         {/* ── Category ── */}
@@ -436,6 +473,7 @@ export default function EquipmentDetailPage() {
                     <p className="text-gray-700 text-xs">
                       Rwf {Number(item.dailyRate || item.hourlyRate * 8 || 0).toLocaleString()} / day
                     </p>
+                    {item.maxRentalPeriod && <p className="text-[#FF5C00] text-xs font-semibold">Max: {item.maxRentalPeriod}</p>}
                   </div>
                   <p className="text-gray-500 text-xs line-clamp-2 leading-tight mt-0.5">
                     {item.description}
@@ -502,6 +540,26 @@ export default function EquipmentDetailPage() {
               </button>
             </div>
 
+            {/* Quantity selector */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-9 h-9 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 font-bold hover:bg-gray-100 transition-colors"
+                >
+                  −
+                </button>
+                <span className="text-xl font-bold text-gray-900 w-8 text-center">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-9 h-9 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 font-bold hover:bg-gray-100 transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-3 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -550,6 +608,10 @@ export default function EquipmentDetailPage() {
             {startDate && endDate && calcTotal() > 0 && (
               <div className="bg-blue-50 rounded-lg p-3 mb-4 text-sm">
                 <div className="flex justify-between">
+                  <span className="text-gray-600">Quantity:</span>
+                  <span className="font-semibold text-gray-900">{quantity}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600">Duration:</span>
                   <span className="font-semibold text-gray-900">
                     {getTimeline()}
@@ -558,12 +620,12 @@ export default function EquipmentDetailPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Rate:</span>
                   <span className="font-semibold text-gray-900">
-                    ${rate}/{rentalType === "hourly" ? "hr" : "day"}
+                    Rwf {rate}/{rentalType === "hourly" ? "hr" : "day"}
                   </span>
                 </div>
                 <div className="flex justify-between border-t border-blue-100 mt-2 pt-2">
                   <span className="text-gray-800 font-bold">Total:</span>
-                  <span className="font-bold text-[#FF5C00]">${calcTotal()}</span>
+                  <span className="font-bold text-[#FF5C00]">Rwf {calcTotal()}</span>
                 </div>
               </div>
             )}

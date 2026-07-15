@@ -183,14 +183,15 @@ model Equipment {
   location    String
   latitude    Float?
   longitude   Float?
-  isActive    Boolean     @default(true)
-  ownerId     Int
-  owner       User        @relation(fields: [ownerId], references: [id])
-  orderItems  OrderItem[]
-  reviews     Review[]
-  favourites  Favourite[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  isActive        Boolean     @default(true)
+  maxRentalPeriod String?
+  ownerId         Int
+  owner           User        @relation(fields: [ownerId], references: [id])
+  orderItems      OrderItem[]
+  reviews         Review[]
+  favourites      Favourite[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Order {
@@ -199,14 +200,16 @@ model Order {
   subtotal    Float       @default(0)
   tax         Float       @default(0)
   totalAmount Float
-  status      OrderStatus @default(PENDING)
-  renterId    Int
-  renter      User        @relation(fields: [renterId], references: [id])
-  items       OrderItem[]
-  payment     Payment?
-  messages    Message[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  status        OrderStatus @default(PENDING)
+  securityType  String?
+  securityValue String?
+  renterId      Int
+  renter        User        @relation(fields: [renterId], references: [id])
+  items         OrderItem[]
+  payment       Payment?
+  messages      Message[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model OrderItem {
@@ -218,6 +221,7 @@ model OrderItem {
   startDate   DateTime
   endDate     DateTime
   price       Float
+  quantity    Int       @default(1)
   timeline    String?
   totalAmount Float
   createdAt   DateTime  @default(now())

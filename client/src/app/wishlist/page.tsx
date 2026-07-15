@@ -13,6 +13,8 @@ interface Equipment {
   title: string;
   category: string;
   hourlyRate: number;
+  dailyRate?: number;
+  maxRentalPeriod?: string | null;
   location: string;
   images: string[];
   owner: { firstName: string; lastName: string };
@@ -93,8 +95,9 @@ export default function WishlistPage() {
                     </svg>
                     {eq.location}
                   </div>
+                  {eq.maxRentalPeriod && <p className="text-[#FF5C00] text-xs font-semibold mt-0.5">Max: {eq.maxRentalPeriod}</p>}
                   <div className="flex items-center justify-between mt-2">
-                    <p className="font-bold text-[#0B215E] text-sm">${eq.hourlyRate}<span className="text-gray-400 font-normal text-xs">/hr</span></p>
+                    <p className="font-bold text-[#0B215E] text-sm">Rwf {eq.hourlyRate}<span className="text-gray-400 font-normal text-xs">/hr</span></p>
                     <button onClick={() => handleRemove(eq.id)}
                       className="text-red-400 hover:text-red-600 transition-colors p-1">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

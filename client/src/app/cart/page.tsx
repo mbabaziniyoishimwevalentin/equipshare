@@ -10,6 +10,8 @@ export default function CartPage() {
   const { cart, removeFromCart, clearCart, cartTotal } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [securityType, setSecurityType] = useState("");
+  const [securityValue, setSecurityValue] = useState("");
 
   const TAX_RATE = 0.18;
   const subtotal = cartTotal;
@@ -36,11 +38,14 @@ export default function CartPage() {
           subtotal,
           tax,
           totalAmount: total,
+          securityType: securityType || undefined,
+          securityValue: securityValue || undefined,
           items: cart.map((item) => ({
             equipmentId: item.equipmentId,
             startDate: item.startDate,
             endDate: item.endDate,
             price: item.price,
+            quantity: item.quantity,
             timeline: item.timeline,
             totalAmount: item.totalAmount,
           })),
@@ -151,17 +156,24 @@ export default function CartPage() {
                     <span className="text-gray-500">Location</span>
                     <span className="text-gray-800 font-medium text-right">{item.location}</span>
 
+                    <span className="text-gray-500">Qty</span>
+                    <span className="text-gray-800 font-medium text-right">{item.quantity}</span>
+
                     <span className="text-gray-500">Duration</span>
                     <span className="text-gray-800 font-medium text-right">{item.timeline}</span>
 
                     <span className="text-gray-500">From</span>
                     <span className="text-gray-800 font-medium text-right">
-                      {new Date(item.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      {item.startDate.includes("T")
+                        ? new Date(item.startDate).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        : new Date(item.startDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                     </span>
 
                     <span className="text-gray-500">To</span>
                     <span className="text-gray-800 font-medium text-right">
-                      {new Date(item.endDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      {item.endDate.includes("T")
+                        ? new Date(item.endDate).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                        : new Date(item.endDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                     </span>
 
                     <span className="text-gray-500 font-semibold border-t border-gray-100 pt-2 mt-1">Subtotal</span>
@@ -200,12 +212,40 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Security Proof */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-4">
+              <h2 className="text-base font-bold text-gray-900 mb-3">Security Proof</h2>
+              <p className="text-xs text-gray-500 mb-3">Select how you want to provide security for this rental.</p>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer has-[:checked]:border-[#FF5C00] has-[:checked]:bg-orange-50">
+                  <input type="radio" name="securityType" value="ID" checked={securityType === "ID"} onChange={() => { setSecurityType("ID"); setSecurityValue(""); }} className="accent-[#FF5C00]" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">National ID</p>
+                    <p className="text-xs text-gray-500">Provide your national ID number as security</p>
+                  </div>
+                </label>
+                {securityType === "ID" && (
+                  <input type="text" placeholder="Enter your National ID number" value={securityValue} onChange={(e) => setSecurityValue(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#0B215E]" />
+                )}
+                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer has-[:checked]:border-[#FF5C00] has-[:checked]:bg-orange-50">
+                  <input type="radio" name="securityType" value="money" checked={securityType === "money"} onChange={() => { setSecurityType("money"); setSecurityValue(""); }} className="accent-[#FF5C00]" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Caution Money</p>
+                    <p className="text-xs text-gray-500">Deposit a refundable caution amount</p>
+                  </div>
+                </label>
+                {securityType === "money" && (
+                  <input type="number" min="0" placeholder="Enter caution amount in Rwf" value={securityValue} onChange={(e) => setSecurityValue(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#0B215E]" />
+                )}
+              </div>
+            </div>
+
             <button
               onClick={handlePlaceOrder}
               disabled={loading}
               className="w-full bg-[#0B215E] text-white py-4 rounded-xl font-bold text-base hover:bg-blue-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Placing Order..." : `Place Order Â· Rwf ${Number(total).toLocaleString()}`}
+              {loading ? "Placing Order..." : `Place Order · Rwf ${Number(total).toLocaleString()}`}
             </button>
           </>
         )}

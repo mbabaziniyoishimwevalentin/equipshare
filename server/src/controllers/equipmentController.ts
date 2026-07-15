@@ -4,7 +4,7 @@ import { createNotification } from './notificationController';
 
 export const createEquipment = async (req: Request, res: Response) => {
   try {
-    const { title, category, description, specs, hourlyRate, dailyRate, weeklyRate, deposit, location, images, isActive } = req.body;
+    const { title, category, description, specs, hourlyRate, dailyRate, weeklyRate, deposit, maxRentalPeriod, location, images, isActive } = req.body;
     // @ts-ignore
     const ownerId = req.user?.id;
     if (!ownerId) return res.status(401).json({ error: 'Unauthorized' });
@@ -19,6 +19,7 @@ export const createEquipment = async (req: Request, res: Response) => {
         dailyRate,
         weeklyRate,
         deposit,
+        maxRentalPeriod: maxRentalPeriod || null,
         location,
         images: images || [],
         isActive: isActive ?? true,
@@ -115,10 +116,10 @@ export const updateEquipment = async (req: Request, res: Response) => {
     if (!existing) return res.status(404).json({ error: 'Not found' });
     if (existing.ownerId !== ownerId) return res.status(403).json({ error: 'Forbidden' });
 
-    const { title, category, description, hourlyRate, dailyRate, location, isActive, images } = req.body;
+    const { title, category, description, hourlyRate, dailyRate, maxRentalPeriod, location, isActive, images } = req.body;
     const updated = await prisma.equipment.update({
       where: { id: Number(id) },
-      data: { title, category, description, hourlyRate, dailyRate, location, isActive, images },
+      data: { title, category, description, hourlyRate, dailyRate, maxRentalPeriod: maxRentalPeriod || null, location, isActive, images },
     });
     res.json(updated);
   } catch (error) {

@@ -16,6 +16,7 @@ interface Equipment {
   location: string;
   isActive: boolean;
   images: string[];
+  maxRentalPeriod?: string | null;
   createdAt: string;
 }
 
@@ -69,6 +70,7 @@ function EquipmentFormModal({ initial, onClose, onSaved, token }: EquipmentFormP
     category: initial?.category || "",
     hourlyRate: initial?.hourlyRate ?? "",
     dailyRate: initial?.dailyRate ?? "",
+    maxRentalPeriod: initial?.maxRentalPeriod || "",
     location: initial?.location || "",
     description: initial?.description || "",
     isActive: initial?.isActive ?? true,
@@ -93,7 +95,7 @@ function EquipmentFormModal({ initial, onClose, onSaved, token }: EquipmentFormP
       return;
     }
     setSaving(true);
-    const body = { ...form, hourlyRate: Number(form.hourlyRate), dailyRate: Number(form.dailyRate) || 0, images };
+    const body = { ...form, hourlyRate: Number(form.hourlyRate), dailyRate: Number(form.dailyRate) || 0, maxRentalPeriod: form.maxRentalPeriod || null, images };
     try {
       const url  = isEdit ? `${API_BASE}/api/equipments/${initial!.id}` : `${API_BASE}/api/equipments`;
       const method = isEdit ? "PUT" : "POST";
@@ -175,6 +177,21 @@ function EquipmentFormModal({ initial, onClose, onSaved, token }: EquipmentFormP
                 </svg>
               </span>
             </div>
+          </div>
+
+          {/* Max Rental Period */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Max Rental Period</label>
+            <select value={form.maxRentalPeriod} onChange={(e) => setForm((p) => ({ ...p, maxRentalPeriod: e.target.value }))}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 appearance-none focus:outline-none focus:ring-1 focus:ring-[#0B215E]">
+              <option value="">No limit</option>
+              <option value="1 day">1 day</option>
+              <option value="3 days">3 days</option>
+              <option value="1 week">1 week</option>
+              <option value="2 weeks">2 weeks</option>
+              <option value="1 month">1 month</option>
+              <option value="3 months">3 months</option>
+            </select>
           </div>
 
           {/* Description */}
@@ -259,6 +276,7 @@ function EquipmentCard({
         <p className="text-gray-600">Hourly: <span className="font-semibold text-gray-900">Rwf {Number(eq.hourlyRate).toLocaleString()}</span></p>
         <p className="text-gray-600">Daily: <span className="text-gray-700">Rwf {(eq.dailyRate || eq.hourlyRate * 8).toLocaleString()}</span></p>
         <p className="text-gray-600">Category: <span className="text-gray-700">{eq.category}</span></p>
+        {eq.maxRentalPeriod && <p className="text-gray-600">Max: <span className="text-gray-700">{eq.maxRentalPeriod}</span></p>}
         <p className="text-gray-500 text-xs truncate">Description: {eq.description || "â€”"}</p>
         <div className="flex justify-end gap-3 mt-1.5">
           <button onClick={() => onDelete(eq)} className="text-red-500 hover:text-red-700 transition-colors">

@@ -136,6 +136,7 @@ export default function SearchPage() {
                     </div>
                     <p className="text-[#FF5C00] font-bold text-sm">Rwf {Number(item.hourlyRate || 0).toLocaleString()} / hr</p>
                     <p className="text-gray-500 text-xs">Rwf {Number(item.dailyRate || item.hourlyRate * 8 || 0).toLocaleString()} / day</p>
+                    {item.maxRentalPeriod && <p className="text-[#FF5C00] text-xs font-semibold mt-0.5">Max: {item.maxRentalPeriod}</p>}
                     <p className="text-gray-500 text-xs line-clamp-2 leading-tight mt-1">
                       {item.description || "No description available"}
                     </p>

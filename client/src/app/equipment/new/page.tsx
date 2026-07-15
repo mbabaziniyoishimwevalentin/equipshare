@@ -17,6 +17,7 @@ export default function NewEquipmentPage() {
     dailyRate: "",
     weeklyRate: "",
     deposit: "",
+    maxRentalPeriod: "",
     location: "",
     specs: "",
   });
@@ -61,6 +62,7 @@ export default function NewEquipmentPage() {
           dailyRate: Number(formData.dailyRate) || 0,
           weeklyRate: Number(formData.weeklyRate) || 0,
           deposit: Number(formData.deposit) || 0,
+          maxRentalPeriod: formData.maxRentalPeriod || null,
           images,
         }),
       });
@@ -178,7 +180,7 @@ export default function NewEquipmentPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Weekly Rate ($)</label>
+                <label className="block text-xs text-gray-500 mb-1">Weekly Rate (Rwf)</label>
                 <input
                   type="number"
                   name="weeklyRate"
@@ -191,7 +193,7 @@ export default function NewEquipmentPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Security Deposit ($)</label>
+                <label className="block text-xs text-gray-500 mb-1">Security Deposit (Rwf)</label>
                 <input
                   type="number"
                   name="deposit"
@@ -204,6 +206,25 @@ export default function NewEquipmentPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Max Rental Period */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Rental Period</label>
+            <select
+              name="maxRentalPeriod"
+              value={formData.maxRentalPeriod}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm text-black focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">No limit</option>
+              <option value="1 day">1 day</option>
+              <option value="3 days">3 days</option>
+              <option value="1 week">1 week</option>
+              <option value="2 weeks">2 weeks</option>
+              <option value="1 month">1 month</option>
+              <option value="3 months">3 months</option>
+            </select>
           </div>
 
           {/* Location */}

@@ -196,14 +196,30 @@ export default function OwnerOrderDetailsPage() {
             <span className="text-right text-gray-700">{firstItem?.equipment?.category || "â€”"}</span>
             <span className="font-bold text-gray-900">Price:</span>
             <span className="text-right text-gray-700">{`Rwf ${Number(firstItem?.price || 0).toLocaleString()}`} /hr</span>
+            <span className="font-bold text-gray-900">Qty</span>
+            <span className="text-right text-gray-700">{firstItem?.quantity || 1}</span>
             <span className="font-bold text-gray-900">Timeline</span>
-            <span className="text-right text-gray-700">{firstItem?.timeline || "â€”"}</span>
+            <span className="text-right text-gray-700">{firstItem?.timeline || "—"}</span>
             <span className="font-bold text-gray-900">Total amount</span>
             <span className="text-right text-gray-700">{`Rwf ${Number(firstItem?.totalAmount || 0).toLocaleString()}`}</span>
           </div>
         </div>
 
         {/* â”€â”€ Renter Details â”€â”€ */}
+        {order.securityType && (
+          <>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Security Proof</h2>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-sm mb-5 shadow-sm">
+              <div className="grid grid-cols-[120px_1fr] gap-y-2">
+                <span className="font-bold text-gray-900">Type</span>
+                <span className="text-right text-gray-700">{order.securityType === "ID" ? "National ID" : "Caution Money"}</span>
+                <span className="font-bold text-gray-900">Value</span>
+                <span className="text-right text-gray-700">{order.securityType === "money" ? `Rwf ${Number(order.securityValue).toLocaleString()}` : order.securityValue}</span>
+              </div>
+            </div>
+          </>
+        )}
+
         <h2 className="text-lg font-bold text-gray-900 mb-2">Renter details</h2>
         <div className="bg-white border border-gray-200 rounded-xl p-4 text-sm mb-6 shadow-sm">
           <div className="grid grid-cols-[120px_1fr] gap-y-2">

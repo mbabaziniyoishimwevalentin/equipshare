@@ -3,7 +3,7 @@ import prisma from '../prisma';
 
 export const createOrder = async (req: Request, res: Response) => {
   try {
-    const { items, subtotal, tax, totalAmount } = req.body;
+    const { items, subtotal, tax, totalAmount, securityType, securityValue } = req.body;
     // @ts-ignore
     const renterId = req.user?.id;
 
@@ -15,6 +15,8 @@ export const createOrder = async (req: Request, res: Response) => {
         subtotal: subtotal || totalAmount,
         tax: tax || 0,
         totalAmount,
+        securityType: securityType || null,
+        securityValue: securityValue || null,
         renterId,
         status: 'PENDING',
         items: {
@@ -23,6 +25,7 @@ export const createOrder = async (req: Request, res: Response) => {
             startDate: new Date(item.startDate),
             endDate: new Date(item.endDate),
             price: item.price,
+            quantity: item.quantity || 1,
             timeline: item.timeline,
             totalAmount: item.totalAmount,
           })),

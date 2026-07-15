@@ -61,7 +61,7 @@ function getOwnerNotifs(): OwnerNotif[] {
     { id: "on2", type: "new_order",  title: "New order placed",   body: "Kobusinge placed a new order for Cooking Pan. Please review.", time: new Date(base - 20*60000).toISOString(),  read: false, linkUrl: "/owner/orders" },
     { id: "on3", type: "message",    title: "New message",         body: "Gasana Goreth sent you a message: 'How far is the delivery?'", time: new Date(base - 40*60000).toISOString(),  read: false, linkUrl: "/owner/messages" },
     { id: "on4", type: "review",     title: "New review received", body: "Jonas Sousa left a 4â˜… review on your Cooking Pan equipment.", time: new Date(base - 2*3600000).toISOString(), read: true,  linkUrl: "/owner" },
-    { id: "on5", type: "payment",    title: "Payment received",    body: "Payment of $164 confirmed for order #09238.", time: new Date(base - 5*3600000).toISOString(), read: true,  linkUrl: "/owner/orders" },
+    { id: "on5", type: "payment",    title: "Payment received",    body: "Payment of Rwf 164 confirmed for order #09238.", time: new Date(base - 5*3600000).toISOString(), read: true,  linkUrl: "/owner/orders" },
     { id: "on6", type: "new_order",  title: "New order placed",   body: "Diego Curumim placed a new order. Please review and accept.", time: new Date(base - 8*3600000).toISOString(), read: true,  linkUrl: "/owner/orders" },
   ];
   localStorage.setItem(OWNER_NOTIF_KEY, JSON.stringify(seeded));

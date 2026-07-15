@@ -23,6 +23,7 @@ interface Equipment {
   isActive: boolean;
   location: string;
   images?: string[];
+  maxRentalPeriod?: string | null;
   owner: { firstName: string; lastName: string };
 }
 
@@ -33,7 +34,7 @@ interface Order {
   totalAmount: number;
   createdAt: string;
   renter: { firstName: string; lastName: string; email: string };
-  items: { id: number; equipment: { title: string }; totalAmount: number }[];
+  items: { id: number; equipment: { title: string }; quantity: number; totalAmount: number }[];
 }
 
 export default function AdminDashboard() {
@@ -322,6 +323,7 @@ export default function AdminDashboard() {
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${eq.category}</td>
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">Rwf ${eq.hourlyRate}</td>
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">Rwf ${eq.dailyRate || 'â€”'}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${eq.maxRentalPeriod || 'â€”'}</td>
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${eq.location}</td>
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${eq.owner.firstName} ${eq.owner.lastName}</td>
         <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px; font-weight: bold; color: ${eq.isActive ? 'green' : 'red'}">${eq.isActive ? 'Active' : 'Suspended'}</td>
@@ -345,7 +347,7 @@ export default function AdminDashboard() {
         </div>
         <h2 class="title">All Equipment Listings</h2>
         <table><thead><tr>
-          <th>Image</th><th>Title</th><th>Category</th><th>Hourly</th><th>Daily</th><th>Location</th><th>Owner</th><th>Status</th>
+          <th>Image</th><th>Title</th><th>Category</th><th>Hourly</th><th>Daily</th><th>Max Period</th><th>Location</th><th>Owner</th><th>Status</th>
         </tr></thead><tbody>${rows}</tbody></table>
         <script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script>
       </body></html>
@@ -459,8 +461,6 @@ export default function AdminDashboard() {
   };
 
   const handleExportSalesPDF = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
     const dateStr = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     const adminName = user ? `${user.firstName} ${user.lastName}` : "Admin";
     const rows = filteredSales.map(s => `
@@ -475,7 +475,7 @@ export default function AdminDashboard() {
     const fromLabel = salesDateFrom ? new Date(salesDateFrom).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Earliest";
     const toLabel = salesDateTo ? new Date(salesDateTo).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Latest";
 
-    printWindow.document.write(`
+    const html = `
       <html><head><title>Sales Report</title>
         <style>
           body { font-family: sans-serif; color: #333; margin: 40px; }
@@ -515,10 +515,18 @@ export default function AdminDashboard() {
             <td style="border: 1px solid #ddd; padding: 8px;">Rwf ${grandTotal.toFixed(0)}</td>
           </tr>
         </tbody></table>
-        <script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script>
       </body></html>
-    `);
-    printWindow.document.close();
+    `;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const filename = `equipshare_sales_${salesPeriodLabel ? salesPeriodLabel.toLowerCase() + "_" : ""}${new Date().toISOString().split("T")[0]}.html`;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const getRoleBadge = (role: string) => {
@@ -813,6 +821,7 @@ export default function AdminDashboard() {
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-[#FF5C00]">Rwf {eq.hourlyRate}<span className="text-[10px] font-normal text-gray-400">/hr</span></p>
                     {eq.dailyRate ? <p className="text-xs font-semibold text-gray-500">Rwf {eq.dailyRate}<span className="text-[9px] font-normal">/day</span></p> : null}
+                    {eq.maxRentalPeriod && <p className="text-[10px] text-[#FF5C00] font-semibold mt-0.5">Max: {eq.maxRentalPeriod}</p>}
                   </div>
                 </div>
 
@@ -889,7 +898,7 @@ export default function AdminDashboard() {
                 <div className="space-y-1.5 mb-3">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-gray-700">{item.equipment.title}</span>
+                      <span className="text-gray-700">{item.equipment.title} × {item.quantity || 1}</span>
                       <span className="font-bold text-[#FF5C00]">Rwf {item.totalAmount.toFixed(0)}</span>
                     </div>
                   ))}

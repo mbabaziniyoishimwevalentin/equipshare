@@ -13,6 +13,7 @@ export interface CartItem {
   endDate: string;
   timeline: string;
   price: number;
+  quantity: number;
   totalAmount: number;
 }
 
@@ -32,10 +33,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = useCallback((item: CartItem) => {
     setCart((prev) => {
-      // If same equipment already in cart, replace it
-      const exists = prev.find((c) => c.equipmentId === item.equipmentId);
+      const exists = prev.find((c) => c.equipmentId === item.equipmentId && c.startDate === item.startDate && c.endDate === item.endDate);
       if (exists) {
-        return prev.map((c) => (c.equipmentId === item.equipmentId ? item : c));
+        return prev.map((c) =>
+          c.equipmentId === item.equipmentId && c.startDate === item.startDate && c.endDate === item.endDate
+            ? { ...c, quantity: c.quantity + item.quantity, totalAmount: c.totalAmount + item.totalAmount }
+            : c
+        );
       }
       return [...prev, item];
     });
