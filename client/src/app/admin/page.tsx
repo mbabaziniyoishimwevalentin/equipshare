@@ -461,35 +461,58 @@ export default function AdminDashboard() {
   };
 
   const handleExportSalesPDF = () => {
-    const dateStr = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const generateDate = new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     const adminName = user ? `${user.firstName} ${user.lastName}` : "Admin";
-    const rows = filteredSales.map(s => `
-      <tr>
-        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${s.date}</td>
-        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px;">${s.orders.length}</td>
-        <td style="border: 1px solid #ddd; padding: 8px; font-size: 12px; font-weight: bold; color: #0B215E;">Rwf ${s.total.toFixed(0)}</td>
-      </tr>
-    `).join("");
-    const grandTotal = filteredSales.reduce((s, g) => s + g.total, 0);
     const periodTitle = salesPeriodLabel ? `${salesPeriodLabel} Sales Report` : "Sales Report";
     const fromLabel = salesDateFrom ? new Date(salesDateFrom).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Earliest";
     const toLabel = salesDateTo ? new Date(salesDateTo).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Latest";
 
+    let rowNum = 0;
+    let grandTotal = 0;
+    const rows: string[] = [];
+    for (const s of filteredSales) {
+      for (const o of s.orders) {
+        for (const item of o.items) {
+          rowNum++;
+          grandTotal += Number(item.totalAmount);
+          const paidBy = `${o.renter.firstName} ${o.renter.lastName}`;
+          const datePaid = new Date(o.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+          rows.push(`
+          <tr>
+            <td class="td">${rowNum}</td>
+            <td class="td">${item.equipment.title}</td>
+            <td class="td">${item.quantity}</td>
+            <td class="td amt">Rwf ${Number(item.totalAmount).toFixed(0)}</td>
+            <td class="td">${paidBy}</td>
+            <td class="td">${datePaid}</td>
+          </tr>`);
+        }
+      }
+    }
+
     const html = `
       <html><head><title>Sales Report</title>
         <style>
-          body { font-family: sans-serif; color: #333; margin: 40px; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0B215E; padding-bottom: 20px; margin-bottom: 30px; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; padding: 30px 35px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0B215E; padding-bottom: 16px; margin-bottom: 10px; }
           .logo-sec { display: flex; align-items: center; gap: 10px; }
-          .system-logo { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #0B215E, #c700ff); }
-          .company-name { font-size: 20px; font-weight: bold; color: #0B215E; }
-          .meta { text-align: right; font-size: 12px; color: #666; }
-          .title { font-size: 18px; font-weight: bold; text-transform: uppercase; color: #111; margin-bottom: 20px; }
-          .info-row { font-size: 12px; color: #555; margin: 4px 0; }
-          .info-label { font-weight: bold; color: #333; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #0B215E; color: white; border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-          .grand-total { font-weight: bold; background: #f0f4ff; font-size: 14px; }
+          .system-logo { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #0B215E, #c700ff); display: inline-block; }
+          .company-name { font-size: 22px; font-weight: 900; color: #0B215E; letter-spacing: 1px; }
+          .meta { text-align: right; font-size: 11px; color: #555; }
+          .meta p { margin: 1px 0; }
+          .sub-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+          .report-title { font-size: 16px; font-weight: bold; text-transform: uppercase; color: #0B215E; }
+          .info-line { font-size: 11px; color: #444; margin: 2px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th { background: #0B215E; color: white; border: 1px solid #0B215E; padding: 5px 6px; text-align: left; font-size: 11px; font-weight: 600; }
+          .td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
+          .amt { text-align: right; font-weight: 600; }
+          .grand-total-row .td { font-weight: bold; background: #f0f4ff; font-size: 12px; }
+          .footer { margin-top: 28px; display: flex; justify-content: space-between; font-size: 11px; }
+          .footer-box { width: 45%; }
+          .footer-box p { margin: 2px 0; }
+          .sig-line { margin-top: 28px; border-top: 1px solid #333; display: inline-block; padding-top: 4px; font-size: 11px; }
         </style>
       </head><body>
         <div class="header">
@@ -498,23 +521,45 @@ export default function AdminDashboard() {
             <span class="company-name">EQUIPSHARE</span>
           </div>
           <div class="meta">
-            <p style="margin: 0; font-weight: bold;">${periodTitle.toUpperCase()}</p>
-            <p style="margin: 3px 0 0 0;">Generated: ${dateStr}</p>
+            <p><strong>${periodTitle.toUpperCase()}</strong></p>
+            <p>Generated: ${generateDate}</p>
           </div>
         </div>
-        <h2 class="title">Sales Report</h2>
-        <p class="info-row"><span class="info-label">Prepared by:</span> ${adminName}</p>
-        <p class="info-row"><span class="info-label">Generated by:</span> EquipShare Admin Panel</p>
-        <p class="info-row"><span class="info-label">Period:</span> ${fromLabel} — ${toLabel}</p>
-        <table><thead><tr>
-          <th>Date</th><th>Orders</th><th>Total (Rwf)</th>
-        </tr></thead><tbody>
-          ${rows}
-          <tr class="grand-total">
-            <td style="border: 1px solid #ddd; padding: 8px;" colspan="2">Grand Total</td>
-            <td style="border: 1px solid #ddd; padding: 8px;">Rwf ${grandTotal.toFixed(0)}</td>
-          </tr>
-        </tbody></table>
+        <div class="sub-header">
+          <span class="report-title">Sales Report</span>
+          <span class="info-line"><strong>Period:</strong> ${fromLabel} — ${toLabel}</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:30px;">#</th>
+            <th>Product Name</th>
+            <th style="width:50px;">Qty</th>
+            <th style="width:90px;">Amount Paid</th>
+            <th>Paid By</th>
+            <th style="width:80px;">Date</th>
+          </tr></thead>
+          <tbody>
+            ${rows.join("")}
+            <tr class="grand-total-row">
+              <td class="td" colspan="3" style="text-align:right;font-weight:bold;">Amafaranga Total</td>
+              <td class="td amt">Rwf ${grandTotal.toFixed(0)}</td>
+              <td class="td"></td>
+              <td class="td"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="footer">
+          <div class="footer-box">
+            <p><strong>Prepared by:</strong> Kobusinge Goreth (Kabelo Admin)</p>
+            <p><strong>Date:</strong> ${generateDate}</p>
+            <p><strong>Signature:</strong> <span class="sig-line">_________________________</span></p>
+          </div>
+          <div class="footer-box" style="text-align:right;">
+            <p><strong>Approved by:</strong> System Administrator</p>
+            <p><strong>Equipshare Soft Inc</strong></p>
+            <p><strong>Signature:</strong> <span class="sig-line">_________________________</span></p>
+          </div>
+        </div>
       </body></html>
     `;
     const blob = new Blob([html], { type: "text/html" });
