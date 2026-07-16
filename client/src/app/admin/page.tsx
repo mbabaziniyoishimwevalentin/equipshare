@@ -555,6 +555,7 @@ export default function AdminDashboard() {
           .signature-details { font-size: 9px; color: #64748b; line-height: 1.5; }
           .signature-details strong { color: #1e293b; }
           .signature-space { height: 35px; }
+          .sig-line { color: #333; margin-bottom: 4px; font-size: 11px; }
 
           /* Document Footer styling */
           .report-footer { margin-top: 50px; text-align: center; font-size: 8px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
@@ -624,9 +625,10 @@ export default function AdminDashboard() {
             <div class="signature-title">Prepared By</div>
             <div class="signature-space"></div>
             <div class="signature-details">
-              <strong>${adminName}</strong><br/>
-              ADMINISTRATOR<br/>
-              ${generateDate}
+              <div class="sig-line">_________________________</div>
+              <strong>Kobusinge Goreth</strong><br/>
+              Sale Staff<br/>
+              Date: ${generateDate}
             </div>
           </div>
           
@@ -634,9 +636,10 @@ export default function AdminDashboard() {
             <div class="signature-title">Approved By</div>
             <div class="signature-space"></div>
             <div class="signature-details">
+              <div class="sig-line">_________________________</div>
               <strong>System Administrator</strong><br/>
               EquipShare Ltd<br/>
-              Date: _________________
+              Date: ${generateDate}
             </div>
           </div>
         </div>
