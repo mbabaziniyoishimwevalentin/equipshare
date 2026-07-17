@@ -628,7 +628,7 @@ export default function AdminDashboard() {
               <strong>Kobusinge Goreth</strong><br/>
               Sale Staff<br/>
               Signature: <span class="sig-line">_________________________</span><br/>
-              Date: ${generateDate}
+              Date: <span class="sig-line">_________________________</span>
             </div>
           </div>
           
@@ -639,7 +639,7 @@ export default function AdminDashboard() {
               <strong>System Administrator</strong><br/>
               EquipShare Ltd<br/>
               Signature: <span class="sig-line">_________________________</span><br/>
-              Date: ${generateDate}
+              Date: <span class="sig-line">_________________________</span>
             </div>
           </div>
         </div>
