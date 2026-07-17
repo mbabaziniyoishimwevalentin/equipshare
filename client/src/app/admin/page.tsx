@@ -625,9 +625,9 @@ export default function AdminDashboard() {
             <div class="signature-title">Prepared By</div>
             <div class="signature-space"></div>
             <div class="signature-details">
-              Signature: <span class="sig-line">_________________________</span><br/>
               <strong>Kobusinge Goreth</strong><br/>
               Sale Staff<br/>
+              Signature: <span class="sig-line">_________________________</span><br/>
               Date: ${generateDate}
             </div>
           </div>
@@ -636,9 +636,9 @@ export default function AdminDashboard() {
             <div class="signature-title">Approved By</div>
             <div class="signature-space"></div>
             <div class="signature-details">
-              Signature: <span class="sig-line">_________________________</span><br/>
               <strong>System Administrator</strong><br/>
               EquipShare Ltd<br/>
+              Signature: <span class="sig-line">_________________________</span><br/>
               Date: ${generateDate}
             </div>
           </div>
