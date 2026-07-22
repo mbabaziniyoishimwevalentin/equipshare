@@ -46,9 +46,10 @@ function Bubble({ msg, myId }: { msg: ApiMessage; myId: number }) {
 }
 
 // ─── Chat View ────────────────────────────────────────────────────
-function ChatView({ conv, myId, onBack, onSend }: {
+function ChatView({ conv, myId, chatLoading, onBack, onSend }: {
   conv: Conversation;
   myId: number;
+  chatLoading: boolean;
   onBack: () => void;
   onSend: (text: string) => void;
 }) {
@@ -82,8 +83,19 @@ function ChatView({ conv, myId, onBack, onSend }: {
       </div>
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 bg-[#F5F5F5]">
-        {conv.messages.map(m => <Bubble key={m.id} msg={m} myId={myId} />)}
-        <div ref={bottomRef} />
+        {chatLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-[#0B215E] border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs text-gray-400">Loading messages...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {conv.messages.map(m => <Bubble key={m.id} msg={m} myId={myId} />)}
+            <div ref={bottomRef} />
+          </>
+        )}
       </div>
       {/* Input */}
       <div className="bg-[#E8E8E8] px-3 py-3 flex items-center gap-2 shrink-0">
@@ -146,6 +158,7 @@ function MessagesInner() {
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [active, setActive] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const getHeaders = () => {
@@ -185,6 +198,25 @@ function MessagesInner() {
         setActive(prev => prev ? { ...prev, messages: msgs } : prev);
       }
     } catch { /* ignore */ }
+    setChatLoading(false);
+  }, []);
+
+  // Open a chat — fetch full messages before showing the chat view
+  const openChat = useCallback(async (conv: Conversation) => {
+    setActive({ ...conv, messages: [] });
+    setChatLoading(true);
+    try {
+      const res = await fetch(`${API}/messages/${conv.orderId}`, { headers: getHeaders() });
+      if (res.ok) {
+        const msgs = await res.json();
+        setActive({ ...conv, messages: msgs });
+      } else {
+        setActive(conv);
+      }
+    } catch {
+      setActive(conv);
+    }
+    setChatLoading(false);
   }, []);
 
   useEffect(() => {
@@ -195,33 +227,29 @@ function MessagesInner() {
     const orderNumber = searchParams.get("orderNumber");
     const ownerName   = searchParams.get("ownerName");
 
-    // If deep-linked from order details: open that chat and send greeting
+    // If deep-linked from order details: open that chat and fetch full messages
     if (orderId && orderNumber && ownerName) {
-      const conv: Conversation = {
+      openChat({
         orderId: Number(orderId),
         orderNumber,
         otherName: ownerName,
         otherOnline: true,
         messages: [],
-      };
-      setActive(conv);
-      loadMessages(Number(orderId));
+      });
       loadConvs();
     } else {
       loadConvs().then(() => setLoading(false));
     }
-
-    setLoading(false);
-  }, [searchParams, loadConvs, loadMessages]);
+  }, [searchParams, loadConvs, openChat]);
 
   // Poll for new messages when chat is open (every 4s)
   useEffect(() => {
-    if (active) {
+    if (active && !chatLoading) {
       if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = setInterval(() => loadMessages(active.orderId), 4000);
     }
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [active?.orderId, loadMessages]);
+  }, [active?.orderId, chatLoading, loadMessages]);
 
   const handleSend = async (text: string) => {
     if (!active) return;
@@ -239,7 +267,6 @@ function MessagesInner() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ body: text }),
       });
       if (res.ok) {
-        // Refresh to get server-confirmed message
         await loadMessages(active.orderId);
       }
     } catch { /* ignore */ }
@@ -248,7 +275,7 @@ function MessagesInner() {
   return (
     <>
       {active ? (
-        <ChatView conv={active} myId={myId} onBack={() => { setActive(null); loadConvs(); }} onSend={handleSend} />
+        <ChatView conv={active} myId={myId} chatLoading={chatLoading} onBack={() => { setActive(null); loadConvs(); }} onSend={handleSend} />
       ) : (
         <div className="flex-1">
           <div className="px-4 pt-4 pb-2 border-b border-gray-100">
@@ -260,7 +287,7 @@ function MessagesInner() {
               <div className="w-8 h-8 border-4 border-[#0B215E] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <ConvList convs={convs} onSelect={setActive} />
+            <ConvList convs={convs} onSelect={openChat} />
           )}
         </div>
       )}
